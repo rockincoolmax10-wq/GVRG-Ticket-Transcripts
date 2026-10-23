@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#596744">
+<title>Ticket Transcript</title>
+<style>
+:root{color-scheme:dark;--brand:#596744;--bg:#17181b;--panel:#232428;--line:#34363c;--text:#f2f3f5;--muted:#b5bac1;--danger:#f0a29a}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{min-height:100vh;display:flex;flex-direction:column}
+header{height:56px;flex:0 0 56px;display:flex;align-items:center;gap:12px;padding:0 22px;background:#202126;border-bottom:1px solid var(--line)}
+.mark{width:10px;height:10px;border-radius:50%;background:var(--brand)}
+header strong{font-size:15px;font-weight:650;letter-spacing:.1px}
+main{width:100%;flex:1;display:grid;place-items:center;padding:28px 18px}
+.empty-card{width:min(560px,100%);display:flex;overflow:hidden;background:var(--panel);border:1px solid #393b41;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.embed-accent{width:5px;flex:0 0 5px;background:var(--brand)}
+.embed-content{padding:20px 22px 22px;min-width:0}
+.embed-title{font-size:16px;font-weight:700;line-height:1.35;margin:0 0 8px;color:var(--text)}
+.embed-description{margin:0;color:#dbdde1;font-size:14px;line-height:1.55}
+.status{color:var(--muted);padding:22px 12px;text-align:center}
+.frame-wrap{width:min(1100px,100%);height:calc(100vh - 112px);min-height:400px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+iframe{display:block;width:100%;height:100%;border:0;background:#fff}
+.error{color:var(--danger)}
+[hidden]{display:none!important}
+@media(max-width:600px){main{padding:18px 12px}.embed-content{padding:18px}.frame-wrap{height:calc(100vh - 88px);min-height:300px}header{padding:0 14px}}
+</style>
+</head>
+<body>
+<header><span class="mark" aria-hidden="true"></span><strong>Ticket Transcript</strong></header>
+<main>
+  <section id="emptyCard" class="empty-card" aria-live="polite">
+    <span class="embed-accent" aria-hidden="true"></span>
+    <div class="embed-content">
+      <h1 class="embed-title">No transcript selected</h1>
+      <p class="embed-description">Open a transcript link from the transcript channel in Discord.</p>
+    </div>
+  </section>
+  <div id="status" class="status" hidden>Loading transcript…</div>
+  <div id="frameWrap" class="frame-wrap" hidden><iframe id="transcript" title="Ticket transcript" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe></div>
+</main>
+<script>
+(async function(){
+  const emptyCard=document.getElementById('emptyCard');
+  const status=document.getElementById('status');
+  const wrap=document.getElementById('frameWrap');
+  const frame=document.getElementById('transcript');
+  const id=new URLSearchParams(location.search).get('id');
+  if(!id){return;}
+  emptyCard.hidden=true;
+  status.hidden=false;
+  status.textContent='Loading transcript…';
+  if(!/^[a-f0-9]{24}$/.test(id)){
+    status.textContent='This transcript link is missing or invalid.';
+    status.classList.add('error'); return;
+  }
+  try{
+    const response=await fetch('data/t/'+encodeURIComponent(id)+'.html',{cache:'no-store'});
+    if(!response.ok) throw new Error(response.status===404?'Transcript not found. It may still be publishing.':'Unable to load transcript ('+response.status+').');
+    const html=await response.text();
+    frame.srcdoc=html;
+    wrap.hidden=false; status.hidden=true;
+    document.title='Ticket Transcript';
+  }catch(error){
+    status.textContent=error.message||'Unable to load this transcript.';
+    status.classList.add('error');
+  }
+})();
+</script>
+</body>
+</html>
